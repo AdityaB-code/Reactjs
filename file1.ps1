@@ -11,7 +11,7 @@
 $ErrorActionPreference = "Stop"
 
 # === Config ===
-$sourceFolder = "E:\new"
+$sourceFolder = "D:\"
 $uploadUrl = "http://192.168.231.21:5000/upload_zip"
 
 # === Find all images ===
