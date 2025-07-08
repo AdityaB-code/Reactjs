@@ -1,13 +1,3 @@
-# ===============================================
-# ✅ PowerShell: batch_upload_parallel.ps1
-# ===============================================
-# 1) Find all images in E:\new
-# 2) Process them in batches of 20
-# 3) Zip each batch
-# 4) Start upload of zip in background (parallel)
-# 5) Producer continues with next batch
-# ===============================================
-
 $ErrorActionPreference = "Stop"
 
 # === Config ===
